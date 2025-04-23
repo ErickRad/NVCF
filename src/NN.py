@@ -34,7 +34,7 @@ class Decoder(nn.Module):
             nn.Linear(512, 128 * 1 * 14 * 14),
             nn.ReLU(),
 
-            nn.Unflatten(1, (128, 1, 14, 14)),  # Reconstruindo para a forma 128x1x14x14
+            nn.Unflatten(1, (128, 1, 14, 14)),  # Rebuild to 128x1x14x14
 
             nn.ConvTranspose3d(128, 64, kernel_size=3, stride=2, padding=1),  # [batch, 128, 1, 14, 14] -> [batch, 64, 2, 28, 28]
             nn.ReLU(),
