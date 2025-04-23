@@ -13,66 +13,66 @@ class VideoFramesDataset(Dataset):
         self.step_between_clips = step_between_clips
         self.transform = transform
         self.samples = []
-        self._extrair_frames_se_preciso()
-        self._preparar_clipes()
+        self._extract_frames_if_needed()
+        self._prepare_clips()
 
-    def _extrair_frames_se_preciso(self):
-        for classe in os.listdir(self.root_dir):
-            caminho_classe = os.path.join(self.root_dir, classe)
-            for arquivo in os.listdir(caminho_classe):
-                if not arquivo.endswith(".avi"):
+    def _extract_frames_if_needed(self):
+        for class_name in os.listdir(self.root_dir):
+            class_path = os.path.join(self.root_dir, class_name)
+            for file_name in os.listdir(class_path):
+                if not file_name.endswith(".avi"):
                     continue
 
-                caminho_video = os.path.join(caminho_classe, arquivo)
-                nome_base = os.path.splitext(arquivo)[0]
-                pasta_saida = os.path.join(caminho_classe, nome_base)
+                video_path = os.path.join(class_path, file_name)
+                base_name = os.path.splitext(file_name)[0]
+                output_folder = os.path.join(class_path, base_name)
 
-                if os.path.exists(pasta_saida) and len(os.listdir(pasta_saida)) > 0:
-                    continue  # Já extraído
+                if os.path.exists(output_folder) and len(os.listdir(output_folder)) > 0:
+                    continue  # Already extracted
 
-                os.makedirs(pasta_saida, exist_ok=True)
+                os.makedirs(output_folder, exist_ok=True)
 
-                cap = cv2.VideoCapture(caminho_video)
+                cap = cv2.VideoCapture(video_path)
                 frame_id = 0
                 while True:
                     ret, frame = cap.read()
                     if not ret:
                         break
-                    caminho_frame = os.path.join(pasta_saida, f"frame_{frame_id:04d}.jpg")
-                    cv2.imwrite(caminho_frame, frame)
+                    frame_path = os.path.join(output_folder, f"frame_{frame_id:04d}.jpg")
+                    cv2.imwrite(frame_path, frame)
                     frame_id += 1
                 cap.release()
 
-    def _preparar_clipes(self):
-        for classe in os.listdir(self.root_dir):
-            caminho_classe = os.path.join(self.root_dir, classe)
-            for pasta_video in os.listdir(caminho_classe):
-                caminho_video = os.path.join(caminho_classe, pasta_video)
-                if not os.path.isdir(caminho_video):
+    def _prepare_clips(self):
+        for class_name in os.listdir(self.root_dir):
+            class_path = os.path.join(self.root_dir, class_name)
+            for video_folder in os.listdir(class_path):
+                video_path = os.path.join(class_path, video_folder)
+                if not os.path.isdir(video_path):
                     continue
 
-                frames = sorted(glob.glob(os.path.join(caminho_video, '*.jpg')))
+                frames = sorted(glob.glob(os.path.join(video_path, '*.jpg')))
                 total = len(frames)
 
                 for i in range(0, total - self.frames_per_clip + 1, self.step_between_clips):
-                    clipe = frames[i:i + self.frames_per_clip]
-                    if len(clipe) == self.frames_per_clip:
-                        self.samples.append(clipe)
+                    clip = frames[i:i + self.frames_per_clip]
+                    if len(clip) == self.frames_per_clip:
+                        self.samples.append(clip)
 
     def __len__(self):
         return len(self.samples)
 
     def __getitem__(self, idx):
-        clipe_paths = self.samples[idx]
-        clipe = [Image.open(p).convert('RGB') for p in clipe_paths]
+        clip_paths = self.samples[idx]
+        clip = [Image.open(p).convert('RGB') for p in clip_paths]
         if self.transform:
-            clipe = [self.transform(img) for img in clipe]
-        clipe = torch.stack(clipe)  # [T, C, H, W]
-        return clipe
+            clip = [self.transform(img) for img in clip]
+        clip = torch.stack(clip)  # [T, C, H, W]
+        return clip
 
 class Loader:
     def __init__(self):
-        self.transformar = transforms.Compose([
+        self.transform = transforms.Compose([
             transforms.Resize((224, 224)),
             transforms.ToTensor(),
         ])
@@ -82,14 +82,14 @@ class Loader:
             root_dir="./data/UCF-101",
             frames_per_clip=5,
             step_between_clips=5,
-            transform=self.transformar
+            transform=self.transform
         )
 
-        tamanho_treino = int(0.8 * len(dataset))
-        tamanho_teste = len(dataset) - tamanho_treino
-        treino, teste = torch.utils.data.random_split(dataset, [tamanho_treino, tamanho_teste])
+        train_size = int(0.8 * len(dataset))
+        test_size = len(dataset) - train_size
+        train_set, test_set = torch.utils.data.random_split(dataset, [train_size, test_size])
 
-        loader_treino = DataLoader(treino, batch_size=4, shuffle=True, num_workers=2)
-        loader_teste = DataLoader(teste, batch_size=4, shuffle=False, num_workers=2)
+        train_loader = DataLoader(train_set, batch_size=4, shuffle=True, num_workers=2)
+        test_loader = DataLoader(test_set, batch_size=4, shuffle=False, num_workers=2)
 
-        return loader_treino, loader_teste
+        return train_loader, test_loader
