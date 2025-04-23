@@ -1,6 +1,6 @@
 # NVCF - Neural-based Video Codec Framework
 
-**NVCF** (Neural-based Video Codec Framework) is a neural video codec designed to **compress, reconstruct, and enhance video quality**. By leveraging deep learning, NVCF will be able to remove common visual artifacts like **aliasing**, **blur**, and **compression noise** as part of the decoding process — offering not just compression, but **smart visual refinement**.
+**NVCF** (Neural-based Video Codec Framework) are designed to **compress, reconstruct, and enhance video quality**. By leveraging deep learning, NVCF will be able to remove common visual artifacts like **aliasing**, **blur**, and **compression noise** as part of the decoding process — offering not just compression, but **smart visual refinement**.
 
 ---
 
